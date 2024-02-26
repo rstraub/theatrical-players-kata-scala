@@ -14,24 +14,21 @@ class StatementPrinter {
   // Violating Separation of concern
   def print(invoice: Invoice, plays: Map[String, Play]): String = {
     var totalAmount = 0
-    var volumeCredits = 0
-
-    // Formatting for text statement
-    var result = header(invoice.customer)
-
     for (perf <- invoice.performances) {
       val play = plays(perf.playId)
       val thisAmount = calculateCosts(play, perf)
-
-      volumeCredits += calculateVolumeCredits(play, perf)
-
-      // print line for this order
-      // Formatting for text statement
-      result += body(play, perf, thisAmount)
-
-      // CALCULATE TOTAL AMOUNT
-      totalAmount += thisAmount;
+      totalAmount += thisAmount
     }
+
+    // Formatting for text statement
+    var result = header(invoice.customer)
+    for (perf <- invoice.performances) {
+      val play = plays(perf.playId)
+
+      result += body(play, perf)
+    }
+
+    val volumeCredits: Int = calculateTotalVolumeCredits(invoice, plays)
 
     // Formatting for text statement
     result += createFooter(totalAmount, volumeCredits)
@@ -39,7 +36,21 @@ class StatementPrinter {
     result
   }
 
-  private def body(play: Play, perf: Performance, amount: Int): String = {
+  private def calculateTotalVolumeCredits(
+      invoice: Invoice,
+      plays: Map[String, Play]
+  ) = {
+    var volumeCredits = 0
+    for (perf <- invoice.performances) {
+      val play = plays(perf.playId)
+
+      volumeCredits += calculateVolumeCredits(play, perf)
+    }
+    volumeCredits
+  }
+
+  private def body(play: Play, perf: Performance): String = {
+    val amount = calculateCosts(play, perf)
     s"  ${play.name}: ${NumberFormat
         .getCurrencyInstance(culture)
         .format((amount / 100).toDouble)} (${perf.audience} seats)$lineSeparator"
