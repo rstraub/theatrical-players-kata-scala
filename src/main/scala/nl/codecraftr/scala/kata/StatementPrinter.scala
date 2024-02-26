@@ -17,8 +17,8 @@ class StatementPrinter {
 
     // Formatting for text statement
     var result = s"Statement for ${invoice.customer}$lineSeparator"
-    // why a var not a val?
-    var culture = Locale.US
+
+    val culture = Locale.US
 
     for (perf <- invoice.performances) {
       val play = plays(perf.playId)
@@ -53,22 +53,23 @@ class StatementPrinter {
   }
 
   def calculateCosts(play: Play, perf: Performance): Int = {
-    var thisAmount = 0
     play.`type` match {
       case "tragedy" => {
-        thisAmount = 40000
-        if (perf.audience > 30)
-          thisAmount += 1000 * (perf.audience - 30)
+        val creditThresholdTragedy = 30
+        var thisAmount = 40000
+        if (perf.audience > creditThresholdTragedy)
+          thisAmount += 1000 * (perf.audience - creditThresholdTragedy)
+        thisAmount
       }
       case "comedy" => {
-        thisAmount = 30000
-        if (perf.audience > 20)
-          thisAmount += 10000 + 500 * (perf.audience - 20)
+        val creditThresholdComedy = 20
+        var thisAmount = 30000
+        if (perf.audience > creditThresholdComedy)
+          thisAmount += 10000 + 500 * (perf.audience - creditThresholdComedy)
         thisAmount += 300 * perf.audience
+        thisAmount
       }
       case _ => throw new Exception("unknown type: " + play.`type`)
     }
-
-    thisAmount
   }
 }

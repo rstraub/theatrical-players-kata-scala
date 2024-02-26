@@ -7,3 +7,7 @@
 - prefer Pure functions
 - minimize uncompilable time
 - commit often!
+- reveal intention
+- remove duplication
+- Limit scope as much as possible
+- rerun tests after every change
