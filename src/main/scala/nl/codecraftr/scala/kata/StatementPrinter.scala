@@ -9,6 +9,7 @@ final case class Performance(playId: String, audience: Int)
 final case class Play(name: String, `type`: String)
 
 class StatementPrinter {
+  private val culture = Locale.US
   // Misleading name? Doing more than printing
   // Violating Separation of concern
   def print(invoice: Invoice, plays: Map[String, Play]): String = {
@@ -17,8 +18,6 @@ class StatementPrinter {
 
     // Formatting for text statement
     var result = s"Statement for ${invoice.customer}$lineSeparator"
-
-    val culture = Locale.US
 
     for (perf <- invoice.performances) {
       val play = plays(perf.playId)
@@ -37,10 +36,19 @@ class StatementPrinter {
     }
 
     // Formatting for text statement
-    result += s"Amount owed is ${NumberFormat.getCurrencyInstance(culture).format(totalAmount / 100d)}$lineSeparator"
-    result += s"You earned ${volumeCredits} credits$lineSeparator"
+    result += createFooter(totalAmount, volumeCredits)
 
     result
+  }
+
+  def createFooter(
+      totalAmount: Int,
+      volumeCredits: Int
+  ): String = {
+    var footer =
+      s"Amount owed is ${NumberFormat.getCurrencyInstance(culture).format(totalAmount / 100d)}$lineSeparator"
+    footer += s"You earned ${volumeCredits} credits$lineSeparator"
+    footer
   }
 
   def calculateVolumeCredits(play: Play, perf: Performance): Int = {

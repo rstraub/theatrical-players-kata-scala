@@ -11,3 +11,5 @@
 - remove duplication
 - Limit scope as much as possible
 - rerun tests after every change
+- focus on higher level policies before diving into the nitty gritty
+-
