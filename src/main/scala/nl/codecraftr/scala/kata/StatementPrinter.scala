@@ -4,47 +4,61 @@ import java.lang.System.lineSeparator
 import java.text.NumberFormat
 import java.util.Locale
 
-final case class Invoice(customer: String, performances: List[Performance])
-final case class Performance(playId: String, audience: Int)
-final case class Play(name: String, `type`: String)
+final case class Invoice(customer: String, performances: List[Performance]) {
+
+  def totalCostCalculation(
+      plays: Map[String, Play]
+  ): Int = {
+    var totalAmount = 0
+    for (perf <- performances) {
+      val thisAmount = plays(perf.playId).calculateCosts(perf)
+      totalAmount += thisAmount
+    }
+    totalAmount
+  }
+
+}
+
+final case class Performance(playId: String, audience: Int){
+}
+final case class Play(name: String, `type`: String){
+  // what do you use of the performance?
+     def calculateCosts(perf: Performance): Int = {
+        `type` match {
+            case "tragedy" => {
+                val creditThresholdTragedy = 30
+                var thisAmount = 40000
+                if (perf.audience > creditThresholdTragedy)
+                    thisAmount += 1000 * (perf.audience - creditThresholdTragedy)
+                thisAmount
+            }
+            case "comedy" => {
+                val creditThresholdComedy = 20
+                var thisAmount = 30000
+                if (perf.audience > creditThresholdComedy)
+                    thisAmount += 10000 + 500 * (perf.audience - creditThresholdComedy)
+                thisAmount += 300 * perf.audience
+                thisAmount
+            }
+            case _ => throw new Exception("unknown type: " + `type`)
+        }
+    }
+}
 
 class StatementPrinter {
   private val culture = Locale.US
-  // Misleading name? Doing more than printing
-  // Violating Separation of concern
-  def print(invoice: Invoice, plays: Map[String, Play]): String = {
-    // Statement line creation
-    var result = header(invoice.customer)
-
-    result += createBody(invoice, plays)
-
-    // did that make it better or worse?
-    result += createFooter(invoice, plays)
-
-    // header(invoice,plays) + body + footer
-
-    result
-  }
+  def print(invoice: Invoice, plays: Map[String, Play]): String =
+    header(invoice.customer) + createBody(invoice, plays) + createFooter(
+      invoice,
+      plays
+    )
 
   private def createBody(invoice: Invoice, plays: Map[String, Play]): String = {
-    // first integrate, then optimize?
     var result: String = ""
     for (perf <- invoice.performances) {
       result += bodyLine(plays(perf.playId), perf)
     }
     result
-  }
-
-  private def totalCostCalculation(
-      invoice: Invoice,
-      plays: Map[String, Play]
-  ): Int = {
-    var totalAmount = 0
-    for (perf <- invoice.performances) {
-      val thisAmount = calculateCosts(plays(perf.playId), perf)
-      totalAmount += thisAmount
-    }
-    totalAmount
   }
 
   private def calculateTotalVolumeCredits(
@@ -61,7 +75,7 @@ class StatementPrinter {
   }
 
   private def bodyLine(play: Play, perf: Performance): String = {
-    val amount = calculateCosts(play, perf)
+    val amount = play.calculateCosts(perf)
     s"  ${play.name}: ${NumberFormat
         .getCurrencyInstance(culture)
         .format((amount / 100).toDouble)} (${perf.audience} seats)$lineSeparator"
@@ -74,7 +88,7 @@ class StatementPrinter {
       invoice: Invoice,
       plays: Map[String, Play]
   ): String = {
-    val totalAmount = totalCostCalculation(invoice, plays)
+    val totalAmount = invoice.totalCostCalculation(plays)
     val volumeCredits = calculateTotalVolumeCredits(invoice, plays)
     var footer =
       s"Amount owed is ${NumberFormat.getCurrencyInstance(culture).format(totalAmount / 100d)}$lineSeparator"
@@ -91,24 +105,4 @@ class StatementPrinter {
     volumeCredits
   }
 
-  private def calculateCosts(play: Play, perf: Performance): Int = {
-    play.`type` match {
-      case "tragedy" => {
-        val creditThresholdTragedy = 30
-        var thisAmount = 40000
-        if (perf.audience > creditThresholdTragedy)
-          thisAmount += 1000 * (perf.audience - creditThresholdTragedy)
-        thisAmount
-      }
-      case "comedy" => {
-        val creditThresholdComedy = 20
-        var thisAmount = 30000
-        if (perf.audience > creditThresholdComedy)
-          thisAmount += 10000 + 500 * (perf.audience - creditThresholdComedy)
-        thisAmount += 300 * perf.audience
-        thisAmount
-      }
-      case _ => throw new Exception("unknown type: " + play.`type`)
-    }
-  }
 }
