@@ -13,14 +13,9 @@ class StatementPrinter {
   // Misleading name? Doing more than printing
   // Violating Separation of concern
   def print(invoice: Invoice, plays: Map[String, Play]): String = {
-    var totalAmount = 0
-    for (perf <- invoice.performances) {
-      val play = plays(perf.playId)
-      val thisAmount = calculateCosts(play, perf)
-      totalAmount += thisAmount
-    }
+    // Ill use commnts to drop hints then? cool!!
 
-    // Formatting for text statement
+    // Statement line creation
     var result = header(invoice.customer)
     for (perf <- invoice.performances) {
       val play = plays(perf.playId)
@@ -30,10 +25,21 @@ class StatementPrinter {
 
     val volumeCredits: Int = calculateTotalVolumeCredits(invoice, plays)
 
-    // Formatting for text statement
-    result += createFooter(totalAmount, volumeCredits)
+    result += createFooter(totalCostCalculation(invoice, plays), volumeCredits)
 
     result
+  }
+
+  private def totalCostCalculation(
+      invoice: Invoice,
+      plays: Map[String, Play]
+  ): Int = {
+    var totalAmount = 0
+    for (perf <- invoice.performances) {
+      val thisAmount = calculateCosts(plays(perf.playId), perf)
+      totalAmount += thisAmount
+    }
+    totalAmount
   }
 
   private def calculateTotalVolumeCredits(
