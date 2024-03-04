@@ -13,20 +13,25 @@ class StatementPrinter {
   // Misleading name? Doing more than printing
   // Violating Separation of concern
   def print(invoice: Invoice, plays: Map[String, Play]): String = {
-    // Ill use commnts to drop hints then? cool!!
-
     // Statement line creation
     var result = header(invoice.customer)
+
+    result += createBody(invoice, plays)
+
+    // did that make it better or worse?
+    result += createFooter(invoice, plays)
+
+    // header(invoice,plays) + body + footer
+
+    result
+  }
+
+  private def createBody(invoice: Invoice, plays: Map[String, Play]): String = {
+    // first integrate, then optimize?
+    var result: String = ""
     for (perf <- invoice.performances) {
-      val play = plays(perf.playId)
-
-      result += body(play, perf)
+      result += bodyLine(plays(perf.playId), perf)
     }
-
-    val volumeCredits: Int = calculateTotalVolumeCredits(invoice, plays)
-
-    result += createFooter(totalCostCalculation(invoice, plays), volumeCredits)
-
     result
   }
 
@@ -55,21 +60,22 @@ class StatementPrinter {
     volumeCredits
   }
 
-  private def body(play: Play, perf: Performance): String = {
+  private def bodyLine(play: Play, perf: Performance): String = {
     val amount = calculateCosts(play, perf)
     s"  ${play.name}: ${NumberFormat
         .getCurrencyInstance(culture)
         .format((amount / 100).toDouble)} (${perf.audience} seats)$lineSeparator"
   }
 
-  private def header(customer: String): String = {
+  private def header(customer: String): String =
     s"Statement for ${customer}$lineSeparator"
-  }
 
   private def createFooter(
-      totalAmount: Int,
-      volumeCredits: Int
+      invoice: Invoice,
+      plays: Map[String, Play]
   ): String = {
+    val totalAmount = totalCostCalculation(invoice, plays)
+    val volumeCredits = calculateTotalVolumeCredits(invoice, plays)
     var footer =
       s"Amount owed is ${NumberFormat.getCurrencyInstance(culture).format(totalAmount / 100d)}$lineSeparator"
     footer += s"You earned ${volumeCredits} credits$lineSeparator"
